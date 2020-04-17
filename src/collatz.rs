@@ -17,11 +17,9 @@ impl Collatz {
             None => {
                 let mut to_do = vec![n];
                 loop {
-                    if let Some(val) = to_do.pop() {
-                        if val == 1 {
-                            self.cache.insert(val, 1);
-                        }
-                        else {
+                    match to_do.pop() {
+                        Some(1) => { self.cache.insert(1, 1); },
+                        Some(val) => {
                             let next = collatz(&val);
                             match self.cache.get(&next).copied() {
                                 Some(dist) => { self.cache.insert(val, dist + 1); },
@@ -31,9 +29,7 @@ impl Collatz {
                                 }
                             }
                         }
-                    }
-                    else {
-                        break;
+                        _ => break
                     }
                 }
                 *self.cache.get(&n).unwrap()

@@ -15,10 +15,10 @@ impl PrimeSieve {
         let sieve = match limit {
             0 => vec![],
             _ => {
-                let mut sieve: Vec<bool> = (0..limit+1).map(|_| true).collect();
-                    sieve[0] = false;
-                    sieve[1] = false;
-                    sieve
+                let mut sieve: Vec<bool> = vec![true; limit+1];
+                sieve[0] = false;
+                sieve[1] = false;
+                sieve
             }
         };
         PrimeSieve {
@@ -100,15 +100,12 @@ impl PrimeSet {
         let mut n = num;
 
         while n > 1 {
-            match primes.iter().find(|&&p| n % p == 0) {
-                Some(&prime) => {
-                    match factors.get(&prime).copied() {
-                        Some(amount) => factors.insert(prime, amount + 1),
-                        None => factors.insert(prime, 1),
-                    };
-                    n /= prime;
-                }
-                _ => (),
+            if let Some(&prime) = primes.iter().find(|&&p| n % p == 0) {
+                match factors.get(&prime).copied() {
+                    Some(amount) => factors.insert(prime, amount + 1),
+                    None => factors.insert(prime, 1),
+                };
+                n /= prime;
             }
         }
 
@@ -117,35 +114,36 @@ impl PrimeSet {
         }
     }
 
+    pub fn empty() -> PrimeSet {
+        PrimeSet {
+            factors: HashMap::new(),
+        }
+    }
+
     pub fn factorial(num: usize) -> PrimeSet {
         (1..=num)
             .map(PrimeSet::new)
-            .fold(PrimeSet::new(0), |acc, new| acc *  new)
+            .fold(PrimeSet::empty(), |acc, new| acc *  new)
     }
 
     pub fn to_num(&self) -> usize {
-        if self.factors.len() == 0 {
-            return 0;
+        match self.factors.len() {
+            0 => 0,
+            _ => self.factors.iter()
+                .fold(1, |acc, (key, val)| acc * key.pow(*val as u32))
         }
-        let mut ans = 1;
-        self.factors.iter().for_each(|(key, val)| ans *= key.pow(*val as u32));
-        ans
     }
 
-    pub fn minimal_combine(&self, other: PrimeSet) -> PrimeSet {
+    pub fn minimal_combine(&self, other: Self) -> PrimeSet {
         let mut factors: HashMap<usize, usize> = HashMap::new();
         for (&key, &val) in &self.factors {
             factors.insert(key, val);
         }
         for (key, val) in other.factors {
             match factors.get(&key).copied() {
-                Some(pre_val) => { 
-                    factors.insert(key, max(val, pre_val)); 
-                },
-                None => {
-                    factors.insert(key, val);
-                },
-            }
+                Some(pre_val) => factors.insert(key, max(val, pre_val)),
+                None => factors.insert(key, val),
+            };
         }
         PrimeSet {
             factors
@@ -163,13 +161,9 @@ impl Mul for PrimeSet {
         }
         for (key, val) in rhs.factors {
             match factors.get(&key).copied() {
-                Some(pre_val) => { 
-                    factors.insert(key, val + pre_val); 
-                },
-                None => {
-                    factors.insert(key, val);
-                },
-            }
+                Some(pre_val) => factors.insert(key, val + pre_val),
+                None => factors.insert(key, val),
+            };
         }
         PrimeSet {
             factors,
