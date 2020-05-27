@@ -5,8 +5,6 @@ use std::fs;
 use num::BigInt;
 use num::pow::pow;
 
-use chrono::{DateTime, NaiveDate};
-
 mod collatz;
 mod fib;
 mod primes;
@@ -61,7 +59,7 @@ fn problem001() -> usize {
 
 fn problem002() -> usize {
     Fib::new()
-        .limit(4_000_000)
+        .limit(4_000_000usize)
         .filter(|x| x % 2 == 0)
         .sum()
 }
@@ -159,20 +157,28 @@ fn problem012() -> usize {
         .unwrap()
 }
 
-fn problem013() -> String {
+fn problem013() -> usize {
     let sum: BigInt = fs::read_to_string("files/problem013.txt")
         .unwrap()
         .lines()
         .map(|line| line.parse::<BigInt>().unwrap())
         .sum();
-    format!("{}", sum)[..10].to_string()
+    sum.to_string()[..10].to_string().parse().unwrap()
 }
 
 fn problem014() -> u128 {
     let mut c = Collatz::new();
     let (num, _) = (1..1_000_000)
         .map(|i| (i, c.collatz(i)))
-        .fold((0, 0), |(acc_num, acc_dist), (f_num, f_dist)| if f_dist > acc_dist { (f_num, f_dist) } else { (acc_num, acc_dist) });
+        .fold(
+            (0, 0),
+            |(acc_num, acc_dist), (f_num, f_dist)|
+                    if f_dist > acc_dist {
+                        (f_num, f_dist)
+                    } else {
+                        (acc_num, acc_dist)
+                    }
+        );
     num
 }
 
@@ -264,10 +270,53 @@ fn problem023() -> usize {
 }
 
 fn problem025() -> usize {
-    for f in Fib::new() {
-        if (f as f64).log10() > 999f64 {
-            return f
-        }
+    Fib::<BigInt>::new()
+        .map(|v| v.to_string().len())
+        .enumerate()
+        .filter(|(_, v)| *v == 1000)
+        .next()
+        .unwrap().0 + 1
+
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn problems_test_010() {
+        assert_eq!(problem001(), 233168);
+        assert_eq!(problem002(), 4613732);
+        assert_eq!(problem003(), 6857);
+        assert_eq!(problem004(), 906609);
+        assert_eq!(problem005(), 232792560);
+        assert_eq!(problem006(), 25164150);
+        assert_eq!(problem007(), 104743);
+        assert_eq!(problem008(), 23514624000);
+        assert_eq!(problem009(), 31875000);
+        assert_eq!(problem010(), 142913828922);
     }
-    panic!("don't do this");
+
+    #[test]
+    fn problems_test_020() {
+        assert_eq!(problem011(), 70600674);
+        assert_eq!(problem012(), 76576500);
+        assert_eq!(problem013(), 5537376230);
+        assert_eq!(problem014(), 837799);
+        assert_eq!(problem015(), 137846528820);
+        assert_eq!(problem016(), 1366);
+        // assert_eq!(problem017(), 906609);
+        assert_eq!(problem018(), 1074);
+        // assert_eq!(problem019(), 906609);
+        assert_eq!(problem020(), 648);
+    }
+
+    #[test]
+    fn problems_test_030() {
+        assert_eq!(problem021(), 31626);
+        assert_eq!(problem022(), 871198282);
+        assert_eq!(problem023(), 4179871);
+        // assert_eq!(problem024(), 648);
+        assert_eq!(problem025(), 4782);
+    }
 }

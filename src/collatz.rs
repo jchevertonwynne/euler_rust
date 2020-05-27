@@ -12,29 +12,24 @@ impl Collatz {
     }
 
     pub fn collatz(&mut self, n: u128) -> u128 {
-        match self.cache.get(&n) {
-            Some(&val) => val,
-            None => {
-                let mut to_do = vec![n];
-                loop {
-                    match to_do.pop() {
-                        Some(1) => { self.cache.insert(1, 1); },
-                        Some(val) => {
-                            let next = collatz(&val);
-                            match self.cache.get(&next).copied() {
-                                Some(dist) => { self.cache.insert(val, dist + 1); },
-                                None => {
-                                    to_do.push(val);
-                                    to_do.push(next);
-                                }
-                            }
+        let mut to_do = vec![n];
+        while !to_do.is_empty() {
+            match to_do.pop() {
+                Some(1) => { self.cache.insert(1, 1); },
+                Some(val) => {
+                    let next = collatz(&val);
+                    match &self.cache.get(&next) {
+                        Some(&dist) => { self.cache.insert(val, dist + 1); },
+                        None => {
+                            to_do.push(val);
+                            to_do.push(next);
                         }
-                        _ => break
                     }
                 }
-                *self.cache.get(&n).unwrap()
+                _ => panic!("dont happen pls")
             }
         }
+        *self.cache.get(&n).unwrap()
     }
 }
 
