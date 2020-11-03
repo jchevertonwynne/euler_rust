@@ -14,7 +14,7 @@ mod utils;
 use collatz::Collatz;
 use fib::Fib;
 use primes::PrimeEndless;
-use primes::PrimeSet;
+use primes::PrimeFactorCount;
 use primes::PrimeSieve;
 use triangle::TriangularNumber;
 use utils::proper_divisors;
@@ -74,22 +74,17 @@ fn problem003() -> usize {
 }
 
 fn problem004() -> usize {
-    let mut ans = 0;
-    for i in 100..1000 {
-        for j in i..1000 {
-            let k = i * j;
-            if k == k.reverse() {
-                ans = max(ans, k);
-            }
-        }
-    }
-    ans
+    (100..1000).flat_map(|i| 
+            (i..1000).map(move |j| i * j)
+                .filter(|&v| v == v.reverse()))
+        .max()
+        .unwrap()
 }
 
 fn problem005() -> usize {
     (1..=20)
-        .map(PrimeSet::new)
-        .fold(PrimeSet::empty(), |acc, val| acc.minimal_combine(val))
+        .map(PrimeFactorCount::new)
+        .fold(PrimeFactorCount::empty(), |acc, val| acc.minimal_combine(val))
         .to_num()
 }
 
@@ -125,15 +120,13 @@ fn problem008() -> usize {
 }
 
 fn problem009() -> usize {
-    for a in 1usize..1000 {
-        for b in (a + 1)..(1000 - a) {
-            let c = 1000 - a - b;
-            if a != c && b != c && a.pow(2) + b.pow(2) == c.pow(2) {
-                return a * b * c
-            }
+    (1usize..1000).flat_map(|a| ((a + 1)..(1000 - a)).filter_map(move |b| {
+        let c = 1000 - a - b;
+        match a != c && b != c && a.pow(2) + b.pow(2) == c.pow(2) {
+            true => Some(a * b * c),
+            false => None
         }
-    }
-    panic!("uh oh");
+    })).next().unwrap()
 }
 
 fn problem010() -> usize {
@@ -173,19 +166,18 @@ fn problem014() -> u128 {
         .fold(
             (0, 0),
             |(acc_num, acc_dist), (f_num, f_dist)|
-                    if f_dist > acc_dist {
-                        (f_num, f_dist)
-                    } else {
-                        (acc_num, acc_dist)
+                    match f_dist > acc_dist {
+                        true => (f_num, f_dist),
+                        false => (acc_num, acc_dist)
                     }
         );
     num
 }
 
 fn problem015() -> usize {
-    let top = PrimeSet::factorial(40);
-    let b1 = PrimeSet::factorial(20);
-    let b2 = PrimeSet::factorial(20);
+    let top = PrimeFactorCount::factorial(40);
+    let b1 = PrimeFactorCount::factorial(20);
+    let b2 = PrimeFactorCount::factorial(20);
     (top / (b1 * b2)).to_num()
 }
 
@@ -204,7 +196,7 @@ fn problem018() -> usize {
             .map(|n| n.parse().unwrap())
             .collect())
         .collect();
-    while triangle.len() >= 2 {
+    while triangle.len() > 1 {
         let top = triangle.pop().unwrap();
         let best: Vec<usize> = (0usize..(top.len() - 1))
             .map(|i| max(top[i], top[i + 1]))
@@ -254,19 +246,12 @@ fn problem022() -> usize {
 }
 
 fn problem023() -> usize {
-    let mut abundants: HashSet<usize> = HashSet::new();
-    for i in 1..=28_123 {
-        if proper_divisors(i).iter().sum::<usize>() > i {
-            abundants.insert(i);
-        }
-    }
-    let mut ans = 0;
-    for i in 1..=28_123 {
-        if !abundants.iter().any(|&a| i > a && abundants.contains(&(i - a))) {
-            ans += i
-        }
-    }
-    ans
+    let abundants: HashSet<usize> = (1..=28_123)
+        .filter(|&i| proper_divisors(i).iter().sum::<usize>() > i)
+        .collect();
+    (1..=28_123)
+        .filter(|&i| !abundants.iter().any(|&j| i > j && abundants.contains(&(i - j))))
+        .sum()
 }
 
 fn problem025() -> usize {
@@ -276,7 +261,6 @@ fn problem025() -> usize {
         .filter(|(_, v)| *v == 1000)
         .next()
         .unwrap().0 + 1
-
 }
 
 #[cfg(test)]
@@ -285,38 +269,38 @@ mod tests {
 
     #[test]
     fn problems_test_010() {
-        assert_eq!(problem001(), 233168);
-        assert_eq!(problem002(), 4613732);
-        assert_eq!(problem003(), 6857);
-        assert_eq!(problem004(), 906609);
-        assert_eq!(problem005(), 232792560);
-        assert_eq!(problem006(), 25164150);
-        assert_eq!(problem007(), 104743);
-        assert_eq!(problem008(), 23514624000);
-        assert_eq!(problem009(), 31875000);
-        assert_eq!(problem010(), 142913828922);
+        assert_eq!(problem001(), 233_168);
+        assert_eq!(problem002(), 4_613_732);
+        assert_eq!(problem003(), 6_857);
+        assert_eq!(problem004(), 906_609);
+        assert_eq!(problem005(), 232_792_560);
+        assert_eq!(problem006(), 25_164_150);
+        assert_eq!(problem007(), 104_743);
+        assert_eq!(problem008(), 23_514_624_000);
+        assert_eq!(problem009(), 31_875_000);
+        assert_eq!(problem010(), 142_913_828_922);
     }
 
     #[test]
     fn problems_test_020() {
-        assert_eq!(problem011(), 70600674);
-        assert_eq!(problem012(), 76576500);
-        assert_eq!(problem013(), 5537376230);
-        assert_eq!(problem014(), 837799);
-        assert_eq!(problem015(), 137846528820);
-        assert_eq!(problem016(), 1366);
+        assert_eq!(problem011(), 70_600_674);
+        assert_eq!(problem012(), 76_576_500);
+        assert_eq!(problem013(), 5_537_376_230);
+        assert_eq!(problem014(), 837_799);
+        assert_eq!(problem015(), 137_846_528_820);
+        assert_eq!(problem016(), 1_366);
         // assert_eq!(problem017(), 906609);
-        assert_eq!(problem018(), 1074);
+        assert_eq!(problem018(), 1_074);
         // assert_eq!(problem019(), 906609);
         assert_eq!(problem020(), 648);
     }
 
     #[test]
     fn problems_test_030() {
-        assert_eq!(problem021(), 31626);
-        assert_eq!(problem022(), 871198282);
-        assert_eq!(problem023(), 4179871);
+        assert_eq!(problem021(), 31_626);
+        assert_eq!(problem022(), 871_198_282);
+        assert_eq!(problem023(), 4_179_871);
         // assert_eq!(problem024(), 648);
-        assert_eq!(problem025(), 4782);
+        assert_eq!(problem025(), 4_782);
     }
 }

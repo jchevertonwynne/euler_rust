@@ -34,11 +34,9 @@ impl Collatz {
 }
 
 fn collatz(n: &u128) -> u128{
-    if n % 2 == 0 {
-        n / 2
-    }
-    else {
-        3 * n + 1
+    match n % 2 == 0 {
+        true => n / 2,
+        false => 3 * n + 1
     }
 }
 

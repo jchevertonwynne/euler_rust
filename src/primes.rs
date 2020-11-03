@@ -1,4 +1,4 @@
-use std::cmp::max;
+use std::{collections::HashSet, cmp::max};
 use std::collections::HashMap;
 use std::ops::Add;
 use std::ops::Div;
@@ -8,7 +8,6 @@ pub struct PrimeSieve {
     sieve: Vec<bool>,
     index: usize,
 }
-
 
 impl PrimeSieve {
     pub fn new(limit: usize) -> PrimeSieve {
@@ -89,41 +88,41 @@ impl Iterator for PrimeEndless {
 }
 
 #[derive(Debug)]
-pub struct PrimeSet {
+pub struct PrimeFactorCount {
     pub factors: HashMap<usize, usize>,
 }
 
-impl PrimeSet {
-    pub fn new(num: usize) -> PrimeSet {
+impl PrimeFactorCount {
+    pub fn new(num: usize) -> PrimeFactorCount {
         let primes: Vec<usize> = PrimeSieve::new(num).collect();
         let mut factors: HashMap<usize, usize> = HashMap::new();
         let mut n = num;
 
         while n > 1 {
             if let Some(&prime) = primes.iter().find(|&&p| n % p == 0) {
-                match factors.get(&prime).copied() {
-                    Some(amount) => factors.insert(prime, amount + 1),
+                match &factors.get(&prime) {
+                    Some(&amount) => factors.insert(prime, amount + 1),
                     None => factors.insert(prime, 1),
                 };
                 n /= prime;
             }
         }
 
-        PrimeSet {
+        PrimeFactorCount {
             factors
         }
     }
 
-    pub fn empty() -> PrimeSet {
-        PrimeSet {
+    pub fn empty() -> PrimeFactorCount {
+        PrimeFactorCount {
             factors: HashMap::new(),
         }
     }
 
-    pub fn factorial(num: usize) -> PrimeSet {
+    pub fn factorial(num: usize) -> PrimeFactorCount {
         (1..=num)
-            .map(PrimeSet::new)
-            .fold(PrimeSet::empty(), |acc, new| acc *  new)
+            .map(PrimeFactorCount::new)
+            .fold(PrimeFactorCount::empty(), |acc, new| acc *  new)
     }
 
     pub fn to_num(&self) -> usize {
@@ -134,24 +133,26 @@ impl PrimeSet {
         }
     }
 
-    pub fn minimal_combine(&self, other: Self) -> PrimeSet {
-        let mut factors: HashMap<usize, usize> = HashMap::new();
-        for (&key, &val) in &self.factors {
-            factors.insert(key, val);
-        }
-        for (key, val) in other.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => factors.insert(key, max(val, pre_val)),
-                None => factors.insert(key, val),
-            };
-        }
-        PrimeSet {
-            factors
+    pub fn minimal_combine(&self, other: Self) -> PrimeFactorCount {
+        PrimeFactorCount {
+            factors: self.factors.iter()
+                .chain(other.factors.iter())
+                .map(|v| *v.0)
+                .collect::<HashSet<usize>>()
+                .iter()
+                .map(|&v| {
+                    match (self.factors.get(&v), other.factors.get(&v)){
+                        (Some(&a), Some(&b)) => (v, max(a, b)),
+                        (Some(&a), None) => (v, a),
+                        (None, Some(&b)) => (v, b),
+                        _ => panic!("how did this happen")
+                    }
+                }).collect()
         }
     }
 }
 
-impl Mul for PrimeSet {
+impl Mul for PrimeFactorCount {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self {
@@ -160,28 +161,28 @@ impl Mul for PrimeSet {
             factors.insert(key, val);
         }
         for (key, val) in rhs.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => factors.insert(key, val + pre_val),
+            match &factors.get(&key) {
+                Some(&pre_val) => factors.insert(key, val + pre_val),
                 None => factors.insert(key, val),
             };
         }
-        PrimeSet {
+        PrimeFactorCount {
             factors,
         }
     }
 }
 
-impl Add for PrimeSet {
+impl Add for PrimeFactorCount {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
         let own_val = self.to_num();
         let other_val = other.to_num();
-        PrimeSet::new(own_val + other_val)
+        PrimeFactorCount::new(own_val + other_val)
     }
 }
 
-impl Div for PrimeSet {
+impl Div for PrimeFactorCount {
     type Output = Self;
 
     fn div(self, rhs: Self) -> Self {
@@ -190,8 +191,8 @@ impl Div for PrimeSet {
             factors.insert(key, val);
         }
         for (key, val) in rhs.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => { 
+            match &factors.get(&key) {
+                Some(&pre_val) => { 
                     let new_val = pre_val - val;
                     factors.insert(key, new_val); 
                 },
@@ -205,21 +206,17 @@ impl Div for PrimeSet {
             .filter(|&(_, val)| val != 0)
             .collect();
         
-        PrimeSet {
+        PrimeFactorCount {
             factors,
         }
     }
 }
 
-impl PartialEq for PrimeSet {
+impl PartialEq for PrimeFactorCount {
     fn eq(&self, other: &Self) -> bool {
-        if self.factors.len() != other.factors.len() {
-            false
-        }
-        else {
+        self.factors.len() == other.factors.len() && 
             self.factors.iter()
                 .all(|(key, val)| other.factors.get(key) == Some(val))
-        }
     }
 }
 
@@ -229,7 +226,7 @@ mod tests {
 
     #[test]
     fn should_build_prime_factor_set() {
-        let pf = PrimeSet::new(200);
+        let pf = PrimeFactorCount::new(200);
         assert_eq!(pf.factors.len(), 2);
         assert_eq!(pf.factors.values().sum::<usize>(), 5);
         assert_eq!(*pf.factors.get(&2).unwrap(), 3);
@@ -238,46 +235,46 @@ mod tests {
 
     #[test]
     fn should_be_able_to_check_equality() {
-        let p1 = PrimeSet::new(200);
-        let p2 = PrimeSet::new(200);
+        let p1 = PrimeFactorCount::new(200);
+        let p2 = PrimeFactorCount::new(200);
         assert_eq!(p1, p2);
     }
 
     #[test]
     fn should_be_able_to_multiply() {
-        let p1 = PrimeSet::new(200);
-        let p2 = PrimeSet::new(4);
+        let p1 = PrimeFactorCount::new(200);
+        let p2 = PrimeFactorCount::new(4);
         let combined = p1 * p2;
-        let expected = PrimeSet::new(800);
+        let expected = PrimeFactorCount::new(800);
         assert_eq!(combined, expected);
     }
 
     #[test]
     fn should_be_able_to_convert_back() {
         let expected = 200;
-        let pf = PrimeSet::new(expected);
+        let pf = PrimeFactorCount::new(expected);
         assert_eq!(pf.to_num(), expected);
 
         let expected = 0;
-        let pf = PrimeSet::new(expected);
+        let pf = PrimeFactorCount::new(expected);
         assert_eq!(pf.to_num(), expected);
     }
 
     #[test]
     fn should_be_able_to_add() {
-        let p1 = PrimeSet::new(150);
-        let p2 = PrimeSet::new(50);
+        let p1 = PrimeFactorCount::new(150);
+        let p2 = PrimeFactorCount::new(50);
         let combined = p1 + p2;
-        let expected = PrimeSet::new(200);
+        let expected = PrimeFactorCount::new(200);
         assert_eq!(combined, expected);
     }
 
     #[test]
     fn should_be_able_to_divide() {
-        let p1 = PrimeSet::new(200);
-        let p2 = PrimeSet::new(100);
+        let p1 = PrimeFactorCount::new(200);
+        let p2 = PrimeFactorCount::new(100);
         let combined = p1 / p2;
-        let expected = PrimeSet::new(2);
+        let expected = PrimeFactorCount::new(2);
         assert_eq!(combined, expected);
     }
 }
