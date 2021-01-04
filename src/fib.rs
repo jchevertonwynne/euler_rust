@@ -1,10 +1,10 @@
-use std::ops::Add;
 use num_traits::Num;
+use std::ops::Add;
 
 pub struct Fib<T> {
     a: T,
     b: T,
-    fib_type: FibType<T>
+    fib_type: FibType<T>,
 }
 
 enum FibType<T> {
@@ -18,10 +18,10 @@ impl<T: Clone + Default + Num> Fib<T> {
         let mut b: T = Default::default();
         a.set_zero();
         b.set_one();
-        Fib { 
+        Fib {
             a,
             b,
-            fib_type: FibType::FibRegular ,
+            fib_type: FibType::FibRegular,
         }
     }
 
@@ -34,7 +34,7 @@ impl<T: Clone + Default + Num> Fib<T> {
     }
 }
 
-impl <T: Clone + PartialOrd + Add<Output = T>> Iterator for Fib<T> {
+impl<T: Clone + PartialOrd + Add<Output = T>> Iterator for Fib<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -42,8 +42,14 @@ impl <T: Clone + PartialOrd + Add<Output = T>> Iterator for Fib<T> {
         self.a = self.b.clone();
         self.b = c;
         match &self.fib_type {
-            FibType::FibRegular => Some (self.a.clone()),
-            FibType::FibLimited(limit) => if self.a < *limit { Some(self.a.clone()) } else { None }
+            FibType::FibRegular => Some(self.a.clone()),
+            FibType::FibLimited(limit) => {
+                if self.a < *limit {
+                    Some(self.a.clone())
+                } else {
+                    None
+                }
+            }
         }
     }
 }

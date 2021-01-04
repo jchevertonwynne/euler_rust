@@ -5,10 +5,7 @@ pub struct TriangularNumber {
 
 impl TriangularNumber {
     pub fn new() -> TriangularNumber {
-        TriangularNumber {
-            tri: 0,
-            counter: 1,
-        }
+        TriangularNumber { tri: 0, counter: 1 }
     }
 }
 

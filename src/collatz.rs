@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub struct Collatz {
-    cache: HashMap::<u128, u128>,
+    cache: HashMap<u128, u128>,
 }
 
 impl Collatz {
@@ -15,29 +15,32 @@ impl Collatz {
         let mut to_do = vec![n];
         while !to_do.is_empty() {
             match to_do.pop() {
-                Some(1) => { self.cache.insert(1, 1); },
+                Some(1) => {
+                    self.cache.insert(1, 1);
+                }
                 Some(val) => {
                     let next = collatz(&val);
                     match &self.cache.get(&next) {
-                        Some(&dist) => { self.cache.insert(val, dist + 1); },
+                        Some(&dist) => {
+                            self.cache.insert(val, dist + 1);
+                        }
                         None => {
                             to_do.push(val);
                             to_do.push(next);
                         }
                     }
                 }
-                _ => panic!("dont happen pls")
+                _ => panic!("dont happen pls"),
             }
         }
         *self.cache.get(&n).unwrap()
     }
 }
 
-fn collatz(n: &u128) -> u128{
+fn collatz(n: &u128) -> u128 {
     if n % 2 == 0 {
         n / 2
-    }
-    else {
+    } else {
         3 * n + 1
     }
 }

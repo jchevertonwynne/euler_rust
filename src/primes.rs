@@ -9,22 +9,18 @@ pub struct PrimeSieve {
     index: usize,
 }
 
-
 impl PrimeSieve {
     pub fn new(limit: usize) -> PrimeSieve {
         let sieve = match limit {
             0 => vec![],
             _ => {
-                let mut sieve: Vec<bool> = vec![true; limit+1];
+                let mut sieve: Vec<bool> = vec![true; limit + 1];
                 sieve[0] = false;
                 sieve[1] = false;
                 sieve
             }
         };
-        PrimeSieve {
-            sieve,
-            index: 0,
-        }
+        PrimeSieve { sieve, index: 0 }
     }
 }
 
@@ -63,7 +59,7 @@ impl PrimeEndless {
     pub fn pre_calc(&self, known: Vec<usize>) -> PrimeEndless {
         PrimeEndless {
             primes: known,
-            returns: self.returns
+            returns: self.returns,
         }
     }
 }
@@ -75,7 +71,7 @@ impl Iterator for PrimeEndless {
         if self.returns < self.primes.len() {
             let value = Some(self.primes[self.returns]);
             self.returns += 1;
-            return value
+            return value;
         }
         let mut check = self.primes[self.primes.len() - 1];
         loop {
@@ -101,17 +97,15 @@ impl PrimeSet {
 
         while n > 1 {
             if let Some(&prime) = primes.iter().find(|&&p| n % p == 0) {
-                match factors.get(&prime).copied() {
-                    Some(amount) => factors.insert(prime, amount + 1),
+                match &factors.get(&prime) {
+                    Some(&amount) => factors.insert(prime, amount + 1),
                     None => factors.insert(prime, 1),
                 };
                 n /= prime;
             }
         }
 
-        PrimeSet {
-            factors
-        }
+        PrimeSet { factors }
     }
 
     pub fn empty() -> PrimeSet {
@@ -123,14 +117,16 @@ impl PrimeSet {
     pub fn factorial(num: usize) -> PrimeSet {
         (1..=num)
             .map(PrimeSet::new)
-            .fold(PrimeSet::empty(), |acc, new| acc *  new)
+            .fold(PrimeSet::empty(), |acc, new| acc * new)
     }
 
     pub fn to_num(&self) -> usize {
         match self.factors.len() {
             0 => 0,
-            _ => self.factors.iter()
-                .fold(1, |acc, (key, val)| acc * key.pow(*val as u32))
+            _ => self
+                .factors
+                .iter()
+                .fold(1, |acc, (key, val)| acc * key.pow(*val as u32)),
         }
     }
 
@@ -140,17 +136,16 @@ impl PrimeSet {
             factors.insert(key, val);
         }
         for (key, val) in other.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => factors.insert(key, max(val, pre_val)),
+            match &factors.get(&key) {
+                Some(&pre_val) => factors.insert(key, max(val, pre_val)),
                 None => factors.insert(key, val),
             };
         }
-        PrimeSet {
-            factors
-        }
+        PrimeSet { factors }
     }
 }
 
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Mul for PrimeSet {
     type Output = Self;
 
@@ -160,14 +155,12 @@ impl Mul for PrimeSet {
             factors.insert(key, val);
         }
         for (key, val) in rhs.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => factors.insert(key, val + pre_val),
+            match &factors.get(&key) {
+                Some(&pre_val) => factors.insert(key, val + pre_val),
                 None => factors.insert(key, val),
             };
         }
-        PrimeSet {
-            factors,
-        }
+        PrimeSet { factors }
     }
 }
 
@@ -181,6 +174,7 @@ impl Add for PrimeSet {
     }
 }
 
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Div for PrimeSet {
     type Output = Self;
 
@@ -190,24 +184,20 @@ impl Div for PrimeSet {
             factors.insert(key, val);
         }
         for (key, val) in rhs.factors {
-            match factors.get(&key).copied() {
-                Some(pre_val) => { 
+            match &factors.get(&key) {
+                Some(&pre_val) => {
                     let new_val = pre_val - val;
-                    factors.insert(key, new_val); 
-                },
+                    factors.insert(key, new_val);
+                }
                 None => {
                     panic!("Incompatible division");
-                },
+                }
             }
         }
 
-        let factors = factors.into_iter()
-            .filter(|&(_, val)| val != 0)
-            .collect();
-        
-        PrimeSet {
-            factors,
-        }
+        let factors = factors.into_iter().filter(|&(_, val)| val != 0).collect();
+
+        PrimeSet { factors }
     }
 }
 
@@ -215,9 +205,9 @@ impl PartialEq for PrimeSet {
     fn eq(&self, other: &Self) -> bool {
         if self.factors.len() != other.factors.len() {
             false
-        }
-        else {
-            self.factors.iter()
+        } else {
+            self.factors
+                .iter()
                 .all(|(key, val)| other.factors.get(key) == Some(val))
         }
     }

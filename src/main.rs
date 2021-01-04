@@ -2,8 +2,8 @@ use std::cmp::max;
 use std::collections::HashSet;
 use std::fs;
 
-use num::BigInt;
 use num::pow::pow;
+use num::BigInt;
 
 mod collatz;
 mod fib;
@@ -17,11 +17,10 @@ use primes::PrimeEndless;
 use primes::PrimeSet;
 use primes::PrimeSieve;
 use triangle::TriangularNumber;
-use utils::proper_divisors;
 use utils::factor_count;
 use utils::max_product_window;
+use utils::proper_divisors;
 use utils::Reversable;
-
 
 fn main() {
     println!("p001: {}", problem001());
@@ -52,9 +51,7 @@ fn main() {
 }
 
 fn problem001() -> usize {
-    (1..1000)
-        .filter(|n| n % 3 == 0 || n % 5 == 0)
-        .sum()
+    (1..1000).filter(|n| n % 3 == 0 || n % 5 == 0).sum()
 }
 
 fn problem002() -> usize {
@@ -94,32 +91,25 @@ fn problem005() -> usize {
 }
 
 fn problem006() -> usize {
-    let square_sum = (1..101)
-        .sum::<usize>()
-        .pow(2);
-    let sum_square = (1..101)
-        .map(|n| n * n)
-        .sum::<usize>();
+    let square_sum = (1..101).sum::<usize>().pow(2);
+    let sum_square = (1..101).map(|n| n * n).sum::<usize>();
     square_sum - sum_square
 }
 
 fn problem007() -> usize {
-    let primes = PrimeEndless::new()
-        .pre_calc(PrimeSieve::new(105_000).collect());
-    primes.skip(10_000)
-        .next()
-        .unwrap()
+    let mut primes = PrimeEndless::new().pre_calc(PrimeSieve::new(105_000).collect());
+    primes.nth(10_000).unwrap()
 }
 
 fn problem008() -> usize {
     let nums = fs::read_to_string("files/problem008.txt").unwrap();
-    let nums: Vec<usize> = nums.chars()
+    let nums: Vec<usize> = nums
+        .chars()
         .filter(|&c| c != '\n')
         .map(|c| c.to_digit(10).unwrap() as usize)
         .collect();
-    (0..(1000-13))
-        .map(|i| nums[i..(i + 13)].iter()
-            .fold(1, |acc, v| acc * v))
+    (0..(1000 - 13))
+        .map(|i| nums[i..(i + 13)].iter().product())
         .max()
         .unwrap()
 }
@@ -129,7 +119,7 @@ fn problem009() -> usize {
         for b in (a + 1)..(1000 - a) {
             let c = 1000 - a - b;
             if a != c && b != c && a.pow(2) + b.pow(2) == c.pow(2) {
-                return a * b * c
+                return a * b * c;
             }
         }
     }
@@ -144,9 +134,11 @@ fn problem011() -> usize {
     let nums = fs::read_to_string("files/problem011.txt")
         .unwrap()
         .lines()
-        .map(|line| line.split_whitespace()
-            .map(|n| n.parse().unwrap())
-            .collect())
+        .map(|line| {
+            line.split_whitespace()
+                .map(|n| n.parse().unwrap())
+                .collect()
+        })
         .collect();
     max_product_window(nums, 4)
 }
@@ -168,17 +160,16 @@ fn problem013() -> usize {
 
 fn problem014() -> u128 {
     let mut c = Collatz::new();
-    let (num, _) = (1..1_000_000)
-        .map(|i| (i, c.collatz(i)))
-        .fold(
-            (0, 0),
-            |(acc_num, acc_dist), (f_num, f_dist)|
-                    if f_dist > acc_dist {
-                        (f_num, f_dist)
-                    } else {
-                        (acc_num, acc_dist)
-                    }
-        );
+    let (num, _) = (1..1_000_000).map(|i| (i, c.collatz(i))).fold(
+        (0, 0),
+        |(acc_num, acc_dist), (f_num, f_dist)| {
+            if f_dist > acc_dist {
+                (f_num, f_dist)
+            } else {
+                (acc_num, acc_dist)
+            }
+        },
+    );
     num
 }
 
@@ -191,29 +182,29 @@ fn problem015() -> usize {
 
 fn problem016() -> usize {
     let big = pow(BigInt::from(2), 1000).to_string();
-    big.chars()
-        .map(|c| c.to_digit(10).unwrap() as usize)
-        .sum()
+    big.chars().map(|c| c.to_digit(10).unwrap() as usize).sum()
 }
 
 fn problem018() -> usize {
     let mut triangle: Vec<Vec<usize>> = fs::read_to_string("files/problem018.txt")
         .unwrap()
         .lines()
-        .map(|line| line.split_whitespace()
-            .map(|n| n.parse().unwrap())
-            .collect())
+        .map(|line| {
+            line.split_whitespace()
+                .map(|n| n.parse().unwrap())
+                .collect()
+        })
         .collect();
-    while triangle.len() >= 2 {
+    while triangle.len() > 1 {
         let top = triangle.pop().unwrap();
-        let best: Vec<usize> = (0usize..(top.len() - 1))
-            .map(|i| max(top[i], top[i + 1]))
+        let best: Vec<usize> = top
+            .iter()
+            .skip(1)
+            .zip(top.iter())
+            .map(|(&i, &j)| max(i, j))
             .collect();
         let next = triangle.pop().unwrap();
-        let added = next.iter()
-            .zip(best.iter())
-            .map(|(a, b)| a + b)
-            .collect();
+        let added = next.iter().zip(best.iter()).map(|(&a, &b)| a + b).collect();
         triangle.push(added);
     }
     triangle[0][0]
@@ -243,13 +234,12 @@ fn problem021() -> usize {
 fn problem022() -> usize {
     let file = fs::read_to_string("files/problem022.txt").unwrap();
     let file = file.replace("\"", "");
-    let mut names: Vec<&str> = file.split(",").collect();
-    names.sort();
-    names.iter()
+    let mut names: Vec<&str> = file.split(',').collect();
+    names.sort_unstable();
+    names
+        .iter()
         .zip(1..=names.len())
-        .map(|(name, i)| name.chars()
-            .map(|c| c as usize - 64)
-            .sum::<usize>() * i)
+        .map(|(name, i)| name.chars().map(|c| c as usize - 64).sum::<usize>() * i)
         .sum()
 }
 
@@ -262,7 +252,10 @@ fn problem023() -> usize {
     }
     let mut ans = 0;
     for i in 1..=28_123 {
-        if !abundants.iter().any(|&a| i > a && abundants.contains(&(i - a))) {
+        if !abundants
+            .iter()
+            .any(|&a| i > a && abundants.contains(&(i - a)))
+        {
             ans += i
         }
     }
@@ -273,10 +266,10 @@ fn problem025() -> usize {
     Fib::<BigInt>::new()
         .map(|v| v.to_string().len())
         .enumerate()
-        .filter(|(_, v)| *v == 1000)
-        .next()
-        .unwrap().0 + 1
-
+        .find(|(_, v)| *v == 1000)
+        .unwrap()
+        .0
+        + 1
 }
 
 #[cfg(test)]
